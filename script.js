@@ -53,10 +53,70 @@ async function boot() {
   document.querySelector('#alien-message').hidden = false;
 }
 
+const terminal = document.querySelector('.terminal');
+const viewer = document.querySelector('#viewer');
+const imageMessage = document.querySelector('#image-message');
+const bufferStatus = document.querySelector('#buffer-status');
+const imageAdvance = document.querySelector('#image-advance');
+const nextImage = document.querySelector('#next-image');
+const scenes = ['images/scene-01.jpg', 'images/scene-02.jpg', 'images/scene-03.jpg'];
+let sceneIndex = 0;
+let accessRequested = false;
+
+function showScene() {
+  imageMessage.hidden = false;
+  imageMessage.textContent = 'LOADING IMAGE...';
+  bufferStatus.textContent = `IMAGE BUFFER : ${String(sceneIndex + 1).padStart(2, '0')} / 03`;
+  const lastScene = sceneIndex === scenes.length - 1;
+  nextImage.textContent = lastScene ? 'RETURN' : 'NEXT';
+  imageAdvance.setAttribute('aria-label', lastScene ? 'Return to interface' : 'Next image');
+
+  // Replace the image node so a late response from the previous image cannot
+  // overwrite the current image's loading/error state.
+  const image = document.createElement('img');
+  image.id = 'scene';
+  image.alt = `Signal image ${sceneIndex + 1}`;
+  image.hidden = true;
+  image.onload = () => {
+    if (document.querySelector('#scene') !== image) return;
+    image.hidden = false;
+    imageMessage.hidden = true;
+  };
+  image.onerror = () => {
+    if (document.querySelector('#scene') !== image) return;
+    image.hidden = true;
+    imageMessage.textContent = 'IMAGE UNAVAILABLE';
+    imageMessage.hidden = false;
+  };
+  document.querySelector('#scene').replaceWith(image);
+  image.src = scenes[sceneIndex];
+}
+
 access.addEventListener('click', () => {
-  output.textContent += '\nSIGNAL ACCESS REQUESTED';
-  status.textContent = 'SIGNAL ACCESS REQUESTED';
-  access.hidden = true;
+  if (!accessRequested) {
+    output.textContent += '\nSIGNAL ACCESS REQUESTED';
+    status.textContent = 'SIGNAL ACCESS REQUESTED';
+    accessRequested = true;
+  }
+  sceneIndex = 0;
+  terminal.hidden = true;
+  viewer.hidden = false;
+  showScene();
+  nextImage.focus();
 });
+
+function advanceImage() {
+  if (sceneIndex < scenes.length - 1) {
+    sceneIndex += 1;
+    showScene();
+  } else {
+    viewer.hidden = true;
+    terminal.hidden = false;
+    access.focus();
+  }
+}
+
+imageAdvance.addEventListener('click', advanceImage);
+nextImage.addEventListener('click', advanceImage);
 
 boot();

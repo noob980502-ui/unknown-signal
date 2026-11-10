@@ -16,5 +16,15 @@
     <p id="status" class="sr-only" role="status" aria-live="polite">Initializing interface.</p>
     <noscript><p>JavaScript is required to initialize this interface.</p></noscript>
   </main>
+  <section id="viewer" class="viewer" aria-label="Image buffer" hidden>
+    <div class="image-buffer">
+      <button id="image-advance" class="image-advance" type="button" aria-label="Next image">
+        <img id="scene" alt="" hidden>
+        <span id="image-message">LOADING IMAGE...</span>
+      </button>
+      <p id="buffer-status" role="status" aria-live="polite">IMAGE BUFFER : 01 / 03</p>
+      <button id="next-image" class="viewer-control" type="button">NEXT</button>
+    </div>
+  </section>
 </body>
 </html>
