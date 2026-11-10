@@ -1,2 +1,41 @@
 # unknown-signal
-An experimental interactive website about a mysterious signal from a post-human Earth.
+
+인류가 사라진 먼 미래, 외계 문명이 오래된 인간의 컴퓨터 기술로 지구에 신호를 보내는 실험적인 웹페이지입니다.
+
+## 실행
+
+별도 설치나 빌드 없이 `index.html`을 브라우저로 열면 됩니다. 로컬 서버를 사용하려면 저장소 폴더에서 실행하세요.
+
+```sh
+python3 -m http.server 8000
+```
+
+브라우저에서 http://localhost:8000 에 접속합니다. 같은 네트워크의 모바일에서는 컴퓨터 IP의 8000번 포트에 접속할 수 있습니다. 새로고침하면 부팅이 다시 시작됩니다.
+
+## 파일 구조
+
+- `index.html`: 터미널, 커서, 접근 버튼 및 접근성 안내
+- `style.css`: 검정 배경, 작은 회백색 글자, 반응형 여백 및 커서 깜빡임
+- `script.js`: 시스템 메시지, 출력 속도와 멈춤, 버튼 동작
+
+## 첫 번째 단계
+
+처음 1–2초간 커서만 표시하고, 이후 메시지를 한 글자씩 출력합니다. 정상 점검은 빠르게, 문자 해독과 재시도는 느리게 진행하며 중간에 멈춥니다. 부팅은 대략 25–35초 걸립니다. 출력이 끝나면 사각형 버튼이 나타나고, 누르면 `SIGNAL ACCESS REQUESTED`를 출력합니다. 요청은 한 번만 처리합니다. 사진 열람과 외부 통신은 구현하지 않았습니다.
+
+마지막 `AWAITING INPUT_`의 밑줄은 실제 깜빡이는 커서입니다. 커서는 출력 뒤에 계속 유지됩니다. 운영체제의 동작 줄이기 설정에서는 커서를 고정하고 메시지를 줄 단위로 표시합니다. 스크린 리더에는 부팅 완료 후 전체 메시지를 알리며, 버튼은 Tab 및 Enter/Space로 조작할 수 있습니다.
+
+## 검증
+
+Chromium + Playwright에서 데스크톱(1440×900), 모바일(390×844, 320×568)을 검증했습니다. 가상 시계로 초기 대기, 점진적 출력, 전체 메시지의 정확한 일치, 부팅 후 버튼 표시, 클릭/키보드 요청, 가로 넘침 없음, JavaScript 오류 없음을 확인했습니다. 동작 줄이기 설정의 전체 메시지와 고정 커서도 통과했습니다. 데스크톱 캡처에서 화면 배치도 확인했습니다. `node --check script.js` 및 `git diff --check`가 통과했습니다. 실제 모바일 기기 및 Safari/Firefox는 검증하지 않았습니다.
+
+## GitHub 반영
+
+정적 파일만 사용하므로 의존성 설치가 필요 없습니다. 변경 파일을 검토한 뒤 커밋하고 작업 브랜치를 푸시하세요.
+
+```sh
+git add index.html style.css script.js README.md
+git commit -m "Add DOS-style signal boot screen"
+git push -u origin HEAD
+```
+
+GitHub Pages로 배포하려면 저장소 Settings → Pages에서 배포할 브랜치와 루트 폴더(`/`)를 선택할 수 있습니다.
