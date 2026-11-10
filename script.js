@@ -62,8 +62,41 @@ const nextImage = document.querySelector('#next-image');
 const scenes = ['images/scene-01.jpg', 'images/scene-02.jpg', 'images/scene-03.jpg'];
 let sceneIndex = 0;
 let accessRequested = false;
+const signalMessage = document.querySelector('#signal-message');
+const signalText = document.querySelector('#signal-text');
+const signalSentence = 'If you have received our signal, please respond.';
+let messageVersion = 0;
+
+async function typeSignalMessage(version) {
+  // Wait for both the image's 500ms display period and the actual alien font.
+  // Unlike the test sentence, this message must never appear in plain English.
+  try {
+    const [, fonts] = await Promise.all([
+      wait(500),
+      document.fonts.load('26px "Unknown Signal Alien"', signalSentence),
+    ]);
+    if (!fonts.length || !fonts.every((font) => font.status === 'loaded')) return;
+  } catch {
+    return;
+  }
+  const isCurrent = () => version === messageVersion && !viewer.hidden && sceneIndex === 0;
+  if (!isCurrent()) return;
+  signalMessage.hidden = false;
+  if (reducedMotion) {
+    signalText.textContent = signalSentence;
+    return;
+  }
+  for (const character of signalSentence) {
+    await wait(randomBetween(35, 80));
+    if (!isCurrent()) return;
+    signalText.textContent += character;
+  }
+}
 
 function showScene() {
+  const version = ++messageVersion;
+  signalMessage.hidden = true;
+  signalText.textContent = '';
   imageMessage.hidden = false;
   imageMessage.textContent = 'LOADING IMAGE...';
   bufferStatus.textContent = `IMAGE BUFFER : ${String(sceneIndex + 1).padStart(2, '0')} / 03`;
@@ -81,6 +114,7 @@ function showScene() {
     if (document.querySelector('#scene') !== image) return;
     image.hidden = false;
     imageMessage.hidden = true;
+    if (sceneIndex === 0) typeSignalMessage(version);
   };
   image.onerror = () => {
     if (document.querySelector('#scene') !== image) return;
