@@ -50,6 +50,7 @@ async function boot() {
 
   status.textContent = output.textContent + '_';
   access.hidden = false;
+  document.querySelector('#alien-message').hidden = false;
 }
 
 access.addEventListener('click', () => {
