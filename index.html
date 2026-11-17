@@ -31,8 +31,13 @@
   </section>
   <section id="archive" class="viewer" aria-label="Second record" hidden>
     <div class="image-buffer">
-      <p>ARCHIVE : PENDING</p>
-      <button id="archive-return" class="viewer-control" type="button">RETURN</button>
+      <button id="archive-image-advance" class="image-advance" type="button" aria-label="Next archive image">
+        <img id="archive-scene" class="scene-image" alt="" hidden>
+        <span id="archive-image-message">LOADING IMAGE...</span>
+      </button>
+      <p id="friend-message" class="alien-text signal-message" aria-label="새로운 친구" hidden><span id="friend-text" aria-hidden="true"></span><span class="cursor" aria-hidden="true">_</span></p>
+      <p id="archive-status" class="buffer-status" role="status" aria-live="polite">ARCHIVE : 01 / 03</p>
+      <button id="archive-return" class="viewer-control" type="button">NEXT</button>
     </div>
   </section>
 </body>

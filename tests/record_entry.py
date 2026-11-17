@@ -24,7 +24,9 @@ with sync_playwright() as p:
   page.clock.run_for(1);assert page.locator('#access-record').is_visible()
   assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
   page.locator('#access-record').click();assert page.locator('#archive').is_visible()
-  assert page.locator('#archive').inner_text()=='ARCHIVE : PENDING\n\nRETURN'
+  assert page.locator('#archive-status').inner_text()=='ARCHIVE : 01 / 03'
+  page.locator('#archive-return').click()
+  page.locator('#archive-return').click()
   page.locator('#archive-return').click();assert page.locator('.terminal').is_visible()
   assert page.locator('#access-record').is_visible()
   assert not errors,errors
@@ -49,6 +51,8 @@ with sync_playwright() as p:
   assert page.evaluate('recordUnlocked')
   page.locator('#access-record').click()
   assert page.locator('#archive').is_visible()
+  page.locator('#archive-return').click()
+  page.locator('#archive-return').click()
   page.locator('#archive-return').click()
   assert page.locator('.terminal').is_visible()
   print('PASS font', mode, 'no English exposure, archive remains accessible')
