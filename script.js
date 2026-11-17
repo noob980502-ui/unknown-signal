@@ -68,20 +68,26 @@ let recordUnlocked = false;
 let recordVersion = 0;
 
 async function revealSecondRecord() {
-  recordUnlocked = true;
   const version = ++recordVersion;
   const sentence = 'Is there really no one left?';
+  let fontLoaded = false;
   try {
-    const fonts = await document.fonts.load('26px "Unknown Signal Alien"', sentence);
-    if (!fonts.length || !fonts.every((font) => font.status === 'loaded')) return;
+    // Do not let a failed or stalled font request block archive access forever.
+    const fonts = await Promise.race([
+      document.fonts.load('26px "Unknown Signal Alien"', sentence),
+      wait(5000).then(() => []),
+    ]);
+    fontLoaded = fonts.length > 0 && fonts.every((font) => font.status === 'loaded');
   } catch {
-    return;
+    // Keep the untranslated sentence hidden, but allow the archive to open.
   }
   const isCurrent = () => version === recordVersion && !terminal.hidden;
   if (!isCurrent()) return;
-  recordMessage.hidden = false;
+  recordMessage.hidden = !fontLoaded;
   recordText.textContent = '';
-  if (reducedMotion) {
+  if (!fontLoaded) {
+    status.textContent = 'Alien font unavailable. Record access is available.';
+  } else if (reducedMotion) {
     recordText.textContent = sentence;
   } else {
     for (const character of sentence) {
@@ -91,7 +97,11 @@ async function revealSecondRecord() {
     }
   }
   await wait(700);
-  if (isCurrent()) accessRecord.hidden = false;
+  if (isCurrent()) {
+    recordUnlocked = true;
+    accessRecord.hidden = false;
+    accessRecord.scrollIntoView({ block: 'nearest' });
+  }
 }
 
 accessRecord.addEventListener('click', () => {
