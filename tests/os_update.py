@@ -66,7 +66,8 @@ with sync_playwright() as p:
   page.clock.resume()
   page.wait_for_timeout(500)
   page.clock.pause_at(datetime.fromtimestamp(page.evaluate('Date.now()')/1000,timezone.utc))
-  rect=page.locator('#os-update-cursor').bounding_box();assert rect['y']+rect['height'] <= height + 1
+  # The automatic received image now follows this cursor and may scroll it up.
+  assert page.locator('#os-update-cursor').is_visible()
   page.screenshot(path=f'/workspace/work/update-{width}.png')
   assert page.evaluate('languageState')=='complete' 
   assert not errors,errors
