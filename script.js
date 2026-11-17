@@ -358,4 +358,52 @@ async function interpretSystemLanguage() {
   access.disabled = false;
   accessRecord.disabled = false;
   accessRecord.focus({ preventScroll: true });
+  showOSUpdate();
+}
+
+let updateStarted = false;
+let updateState = 'idle';
+const updateScreen = document.querySelector('#os-update');
+const updateText = document.querySelector('#os-update-text');
+const updateCursor = document.querySelector('#os-update-cursor');
+const updateLines = [
+  { text: 'NEW OS UPDATE DETECTED.', pause: 450 },
+  { text: 'INITIALIZING UPDATE...', pause: 550 },
+  { text: 'CHECKING UPDATE FILES...', pause: 1100 },
+  { text: 'FILES VERIFIED.', pause: 500 },
+  { text: 'STARTING UPDATE...', pause: 0 },
+];
+
+let lastUpdateScroll = -Infinity;
+function followUpdateCursor(force = false) {
+  if (terminal.hidden) return;
+  const bounds = updateCursor.getBoundingClientRect();
+  if ((bounds.bottom > window.innerHeight || bounds.top < 0)
+      && (force || performance.now() - lastUpdateScroll > 200)) {
+    updateCursor.scrollIntoView({ behavior: reducedMotion ? 'instant' : 'smooth', block: 'nearest' });
+    lastUpdateScroll = performance.now();
+  }
+}
+
+async function showOSUpdate() {
+  // Claim this sequence before scheduling anything: archive replays cannot
+  // create another timer chain or change the already translated diagnostics.
+  if (updateStarted) return;
+  updateStarted = true;
+  updateState = 'waiting';
+  await wait(2000);
+  updateState = 'typing';
+  updateScreen.hidden = false;
+  for (const [index, line] of updateLines.entries()) {
+    if (index > 0) updateText.textContent += '\n';
+    for (const character of line.text) {
+      await wait(randomBetween(35, 80));
+      updateText.textContent += character;
+      followUpdateCursor();
+    }
+    await wait(line.pause);
+  }
+  updateState = 'complete';
+  status.textContent = updateText.textContent;
+  followUpdateCursor(true);
 }
