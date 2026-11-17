@@ -363,9 +363,37 @@ async function interpretSystemLanguage() {
 
 let updateStarted = false;
 let updateState = 'idle';
-const updateScreen = document.querySelector('#os-update');
-const updateText = document.querySelector('#os-update-text');
-const updateCursor = document.querySelector('#os-update-cursor');
+let updateScreen;
+let updateText;
+let updateCursor;
+
+function ensureUpdateScreen() {
+  // GitHub Pages/browser caches can serve older HTML with the newer script.
+  // Resolve the region when it is needed, repairing only missing update nodes.
+  updateScreen = document.querySelector('#os-update');
+  if (!updateScreen) {
+    updateScreen = document.createElement('pre');
+    updateScreen.id = 'os-update';
+    updateScreen.className = 'screen os-update';
+    updateScreen.hidden = true;
+    updateScreen.setAttribute('aria-hidden', 'true');
+    terminal.append(updateScreen);
+  }
+  updateText = updateScreen.querySelector('#os-update-text');
+  if (!updateText) {
+    updateText = document.createElement('span');
+    updateText.id = 'os-update-text';
+    updateScreen.prepend(updateText);
+  }
+  updateCursor = updateScreen.querySelector('#os-update-cursor');
+  if (!updateCursor) {
+    updateCursor = document.createElement('span');
+    updateCursor.id = 'os-update-cursor';
+    updateCursor.className = 'cursor';
+    updateCursor.textContent = '_';
+    updateScreen.append(updateCursor);
+  }
+}
 const updateLines = [
   { text: 'NEW OS UPDATE DETECTED.', pause: 450 },
   { text: 'INITIALIZING UPDATE...', pause: 550 },
@@ -392,6 +420,7 @@ async function showOSUpdate() {
   updateStarted = true;
   updateState = 'waiting';
   await wait(2000);
+  ensureUpdateScreen();
   updateState = 'typing';
   updateScreen.hidden = false;
   for (const [index, line] of updateLines.entries()) {

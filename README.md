@@ -92,3 +92,17 @@ TEST_URL=http://127.0.0.1:8000 python3 tests/os_update.py
 ```
 
 Chromium의 데스크톱 및 모바일 너비 1440/390/320px에서 두 기록, 외계 문자 메시지, OS 언어 변환, 완료 후 2초 대기, 영어 문장 순서, 기존 내용 보존, 커서/스크롤, 재열람 시 중복 방지를 검증합니다.
+
+## 배포 파일 버전과 업데이트 영역 복구
+
+HTML과 JavaScript가 서로 다른 배포 버전으로 캐시되면, 이전 HTML에는 `#os-update` 영역이 없어 언어 변환 이후 업데이트 출력이 중단될 수 있습니다. 출력 시점에 영역과 하위 텍스트/커서 요소를 다시 확인하고 누락된 요소만 생성합니다. 기존 외계 문자와 버튼은 변경하지 않습니다. HTML은 `script.js?v=os-update-2`, `style.css?v=os-update-2`를 참조해 이전 무버전 파일 캐시와 구분합니다.
+
+PR 병합 후 저장소 Actions에서 Pages 배포 완료를 확인하세요. 이미 열어 둔 공개 페이지에는 이전 코드가 남아 있을 수 있으므로 Chrome에서 강력 새로고침(Windows/Linux: Ctrl+Shift+R, macOS: Cmd+Shift+R)을 한 번 실행합니다. 개발자 도구 Network에서 `script.js?v=os-update-2` 요청을 확인할 수 있습니다. 이 버전 표시는 새 HTML이 로드됐는지 확인하는 방법이며, 배포 완료 여부 자체를 보장하지는 않습니다.
+
+이전 HTML/최신 JavaScript 조합, 하위 출력 요소 누락, 구형 무버전 스크립트 캐시를 포함한 회귀 검사:
+
+```sh
+TEST_URL=http://127.0.0.1:8000 python3 tests/os_update_recovery.py
+```
+
+기존 전체 흐름과 2초 대기 검사는 `tests/os_update.py`로 계속 실행합니다. 공개 사이트의 실제 캐시 응답은 이 작업 환경의 접근 제한으로 직접 확인하지 못했습니다.
