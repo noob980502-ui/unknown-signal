@@ -13,6 +13,8 @@
     <pre class="screen" aria-hidden="true"><span id="output"></span><span class="cursor">_</span></pre>
     <button id="access" type="button" aria-label="Request signal access" hidden>□</button>
     <p id="alien-message" class="alien-text" hidden>CAN YOU HEAR ME</p>
+    <p id="record-message" class="alien-text signal-message" aria-label="정말 아무도 없나요?" hidden><span id="record-text" aria-hidden="true"></span><span class="cursor" aria-hidden="true">_</span></p>
+    <button id="access-record" class="viewer-control record-access" type="button" hidden>ACCESS RECORD</button>
     <p id="status" class="sr-only" role="status" aria-live="polite">Initializing interface.</p>
     <noscript><p>JavaScript is required to initialize this interface.</p></noscript>
   </main>
@@ -25,6 +27,12 @@
       <p id="signal-message" class="alien-text signal-message" aria-label="저희 신호를 수신하셨다면 회신 부탁드립니다." hidden><span id="signal-text" aria-hidden="true"></span><span class="cursor" aria-hidden="true">_</span></p>
       <p id="buffer-status" role="status" aria-live="polite">IMAGE BUFFER : 01 / 03</p>
       <button id="next-image" class="viewer-control" type="button">NEXT</button>
+    </div>
+  </section>
+  <section id="archive" class="viewer" aria-label="Second record" hidden>
+    <div class="image-buffer">
+      <p>ARCHIVE : PENDING</p>
+      <button id="archive-return" class="viewer-control" type="button">RETURN</button>
     </div>
   </section>
 </body>

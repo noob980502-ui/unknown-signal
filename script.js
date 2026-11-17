@@ -59,6 +59,51 @@ const imageMessage = document.querySelector('#image-message');
 const bufferStatus = document.querySelector('#buffer-status');
 const imageAdvance = document.querySelector('#image-advance');
 const nextImage = document.querySelector('#next-image');
+const recordMessage = document.querySelector('#record-message');
+const recordText = document.querySelector('#record-text');
+const accessRecord = document.querySelector('#access-record');
+const archive = document.querySelector('#archive');
+const archiveReturn = document.querySelector('#archive-return');
+let recordUnlocked = false;
+let recordVersion = 0;
+
+async function revealSecondRecord() {
+  recordUnlocked = true;
+  const version = ++recordVersion;
+  const sentence = 'Is there really no one left?';
+  try {
+    const fonts = await document.fonts.load('26px "Unknown Signal Alien"', sentence);
+    if (!fonts.length || !fonts.every((font) => font.status === 'loaded')) return;
+  } catch {
+    return;
+  }
+  const isCurrent = () => version === recordVersion && !terminal.hidden;
+  if (!isCurrent()) return;
+  recordMessage.hidden = false;
+  recordText.textContent = '';
+  if (reducedMotion) {
+    recordText.textContent = sentence;
+  } else {
+    for (const character of sentence) {
+      await wait(randomBetween(65, 120));
+      if (!isCurrent()) return;
+      recordText.textContent += character;
+    }
+  }
+  await wait(700);
+  if (isCurrent()) accessRecord.hidden = false;
+}
+
+accessRecord.addEventListener('click', () => {
+  terminal.hidden = true;
+  archive.hidden = false;
+  archiveReturn.focus();
+});
+archiveReturn.addEventListener('click', () => {
+  archive.hidden = true;
+  terminal.hidden = false;
+  accessRecord.focus();
+});
 const scenes = ['images/scene-01.jpg', 'images/scene-02.jpg', 'images/scene-03.jpg'];
 let sceneIndex = 0;
 let accessRequested = false;
@@ -127,6 +172,13 @@ function showScene() {
 }
 
 access.addEventListener('click', () => {
+  // Cancel a partially typed second-record prompt while replaying record one.
+  recordVersion += 1;
+  if (accessRecord.hidden) {
+    recordMessage.hidden = true;
+    recordText.textContent = '';
+    recordUnlocked = false;
+  }
   if (!accessRequested) {
     output.textContent += '\nSIGNAL ACCESS REQUESTED';
     status.textContent = 'SIGNAL ACCESS REQUESTED';
@@ -147,6 +199,7 @@ function advanceImage() {
     viewer.hidden = true;
     terminal.hidden = false;
     access.focus();
+    if (!recordUnlocked) revealSecondRecord();
   }
 }
 
