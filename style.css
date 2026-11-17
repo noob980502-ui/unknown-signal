@@ -95,9 +95,9 @@ body { margin: 0; min-height: 100vh; min-height: 100svh; }
   font: inherit;
   cursor: pointer;
 }
-#scene { display: block; max-width: 100%; max-height: 70vh; max-height: 70svh; width: auto; height: auto; }
-#scene[hidden] { display: none; }
-#buffer-status { margin: 16px 0 12px; line-height: 1.65; }
+#scene, .scene-image { display: block; max-width: 100%; max-height: 70vh; max-height: 70svh; width: auto; height: auto; }
+#scene[hidden], .scene-image[hidden] { display: none; }
+#buffer-status, .buffer-status { margin: 16px 0 12px; line-height: 1.65; }
 .viewer-control {
   min-height: 44px;
   padding: 0 12px;
@@ -112,3 +112,8 @@ body { margin: 0; min-height: 100vh; min-height: 100svh; }
   outline: 1px solid #c1c4be;
   outline-offset: 4px;
 }
+
+/* Keep each diagnostic line in place while its alphabet is interpreted. */
+.os-line { display: block; min-height: 1.65em; }
+.os-line.alien-text { margin: 0; line-height: inherit; }
+.os-line:last-child { display: inline; }

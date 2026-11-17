@@ -104,16 +104,6 @@ async function revealSecondRecord() {
   }
 }
 
-accessRecord.addEventListener('click', () => {
-  terminal.hidden = true;
-  archive.hidden = false;
-  archiveReturn.focus();
-});
-archiveReturn.addEventListener('click', () => {
-  archive.hidden = true;
-  terminal.hidden = false;
-  accessRecord.focus();
-});
 const scenes = ['images/scene-01.jpg', 'images/scene-02.jpg', 'images/scene-03.jpg'];
 let sceneIndex = 0;
 let accessRequested = false;
@@ -217,3 +207,155 @@ imageAdvance.addEventListener('click', advanceImage);
 nextImage.addEventListener('click', advanceImage);
 
 boot();
+
+// The second archive uses the same layout and controls as the first record.
+const archiveScenes = ['images/scene-04.jpg', 'images/scene-05.jpg', 'images/scene-06.jpg'];
+const archiveImageAdvance = document.querySelector('#archive-image-advance');
+const archiveImageMessage = document.querySelector('#archive-image-message');
+const archiveStatus = document.querySelector('#archive-status');
+const friendMessage = document.querySelector('#friend-message');
+const friendText = document.querySelector('#friend-text');
+let archiveIndex = 0;
+let archiveVersion = 0;
+let languageState = 'idle';
+let archiveFontReady;
+
+async function loadArchiveFont() {
+  try {
+    const fonts = await Promise.race([
+      document.fonts.load('12px "Unknown Signal Alien"'),
+      wait(5000).then(() => []),
+    ]);
+    return fonts.length > 0 && fonts.every((font) => font.status === 'loaded');
+  } catch {
+    return false;
+  }
+}
+
+async function typeFriend(version) {
+  const [, fontReady] = await Promise.all([wait(500), archiveFontReady]);
+  const isCurrent = () => version === archiveVersion && !archive.hidden && archiveIndex === 1;
+  if (!fontReady || !isCurrent()) return;
+  friendMessage.hidden = false;
+  const sentence = 'NEW FRIEND';
+  if (reducedMotion) {
+    friendText.textContent = sentence;
+    return;
+  }
+  for (const character of sentence) {
+    await wait(randomBetween(35, 80));
+    if (!isCurrent()) return;
+    friendText.textContent += character;
+  }
+}
+
+function showArchiveScene() {
+  const version = ++archiveVersion;
+  friendMessage.hidden = true;
+  friendText.textContent = '';
+  archiveImageMessage.hidden = false;
+  archiveImageMessage.textContent = 'LOADING IMAGE...';
+  archiveStatus.textContent = `ARCHIVE : ${String(archiveIndex + 1).padStart(2, '0')} / 03`;
+  const last = archiveIndex === archiveScenes.length - 1;
+  archiveReturn.textContent = last ? 'RETURN' : 'NEXT';
+  archiveImageAdvance.setAttribute('aria-label', last ? 'Return to interface' : 'Next archive image');
+  const image = document.createElement('img');
+  image.id = 'archive-scene';
+  image.className = 'scene-image';
+  image.alt = ['Abandoned indoor swimming pool', 'Smiling golden retriever',
+    'Golden retriever smelling grass in an abandoned playground'][archiveIndex];
+  image.hidden = true;
+  image.onload = () => {
+    if (version !== archiveVersion || archive.hidden) return;
+    image.hidden = false;
+    archiveImageMessage.hidden = true;
+    if (archiveIndex === 1) typeFriend(version);
+  };
+  image.onerror = () => {
+    if (version !== archiveVersion || archive.hidden) return;
+    archiveImageMessage.textContent = 'IMAGE UNAVAILABLE';
+  };
+  document.querySelector('#archive-scene').replaceWith(image);
+  image.src = archiveScenes[archiveIndex];
+}
+
+accessRecord.addEventListener('click', () => {
+  terminal.hidden = true;
+  archive.hidden = false;
+  archiveIndex = 0;
+  archiveFontReady = loadArchiveFont();
+  showArchiveScene();
+  archiveReturn.focus();
+});
+
+function advanceArchive() {
+  if (archiveIndex < archiveScenes.length - 1) {
+    archiveIndex += 1;
+    showArchiveScene();
+    return;
+  }
+  archiveVersion += 1;
+  friendMessage.hidden = true;
+  friendText.textContent = '';
+  archive.hidden = true;
+  terminal.hidden = false;
+  accessRecord.focus();
+  if (languageState === 'idle') {
+    terminal.scrollIntoView({ block: 'start' });
+    interpretSystemLanguage();
+  }
+}
+archiveImageAdvance.addEventListener('click', advanceArchive);
+archiveReturn.addEventListener('click', advanceArchive);
+
+async function interpretSystemLanguage() {
+  languageState = 'waiting';
+  // Prevent re-entry during the one-second pause and interpretation.
+  access.disabled = true;
+  accessRecord.disabled = true;
+  await wait(1000);
+  if (!await archiveFontReady) {
+    // No Latin fallback: leave the existing OS intact and allow a later retry.
+    languageState = 'idle';
+    access.disabled = false;
+    accessRecord.disabled = false;
+    return;
+  }
+  languageState = 'interpreting';
+  const lines = output.textContent.split('\n');
+  const rows = lines.map((line) => {
+    const row = document.createElement('span');
+    row.className = 'os-line';
+    row.textContent = line || '\u00a0';
+    return row;
+  });
+  output.replaceChildren(...rows);
+  // Freeze row heights before deleting letters, retaining all original positions.
+  rows.forEach((row) => { row.style.minHeight = `${row.getBoundingClientRect().height}px`; });
+  const nonempty = lines.filter(Boolean).length;
+  const lineDuration = 12000 / nonempty;
+  for (const [index, line] of lines.entries()) {
+    if (!line) continue;
+    const row = rows[index];
+    if (!reducedMotion) {
+      const characterDelay = lineDuration / (line.length * 2);
+      for (let length = line.length - 1; length >= 0; length -= 1) {
+        row.textContent = line.slice(0, length) || '\u00a0';
+        await wait(characterDelay);
+      }
+      row.classList.add('alien-text');
+      for (let length = 1; length <= line.length; length += 1) {
+        row.textContent = line.slice(0, length);
+        await wait(characterDelay);
+      }
+    } else {
+      row.classList.add('alien-text');
+      await wait(lineDuration);
+    }
+  }
+  languageState = 'complete';
+  status.textContent = 'System language interpretation complete.';
+  access.disabled = false;
+  accessRecord.disabled = false;
+  accessRecord.focus({ preventScroll: true });
+}
