@@ -119,3 +119,22 @@ body { margin: 0; min-height: 100vh; min-height: 100svh; }
 .os-line:last-child { display: inline; }
 .os-update { margin-top: 20px; font-family: "Courier New", Courier, monospace; }
 #os-update-cursor { scroll-margin-block: 8px; }
+
+.received-image { margin: 20px 0 0; width: 100%; max-width: 800px; }
+.received-image-frame { position: relative; }
+.received-image img {
+  display: block;
+  width: 100%;
+  height: auto;
+  clip-path: inset(0 0 calc(100% - var(--received-progress, 0%)) 0);
+}
+.received-image-front {
+  position: absolute;
+  top: var(--received-progress, 0%);
+  left: 0;
+  width: 1px;
+  height: 1px;
+  scroll-margin-block: 24px;
+  pointer-events: none;
+}
+.received-image-error { margin: 0; font: inherit; }

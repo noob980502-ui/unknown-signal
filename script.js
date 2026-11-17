@@ -435,4 +435,89 @@ async function showOSUpdate() {
   updateState = 'complete';
   status.textContent = updateText.textContent;
   followUpdateCursor(true);
+  receiveImage();
+}
+
+let receivedImageState = 'idle';
+let receivedImageStarted = false;
+
+function loadReceivedImage(image) {
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (loaded) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      image.onload = null;
+      image.onerror = null;
+      resolve(loaded);
+    };
+    // A missing, damaged or stalled image must not interrupt the terminal.
+    const timeout = setTimeout(() => finish(false), 15000);
+    image.onload = () => finish(true);
+    image.onerror = () => finish(false);
+    image.src = 'images/scene-07.jpg';
+  });
+}
+
+async function receiveImage() {
+  if (receivedImageStarted) return;
+  receivedImageStarted = true;
+  receivedImageState = 'waiting';
+  // Build this below the update, including when older HTML was repaired.
+  const section = document.createElement('figure');
+  section.className = 'received-image';
+  section.id = 'received-image';
+  section.hidden = true;
+  const frame = document.createElement('div');
+  frame.className = 'received-image-frame';
+  const image = document.createElement('img');
+  image.alt = 'Received signal image';
+  const front = document.createElement('span');
+  front.className = 'received-image-front';
+  front.setAttribute('aria-hidden', 'true');
+  frame.append(image, front);
+  section.append(frame);
+  updateScreen.after(section);
+  // Fetch while the screen waits, but do not show any image before two seconds.
+  const loaded = loadReceivedImage(image);
+  await wait(2000);
+  receivedImageState = 'loading';
+  if (!await loaded) {
+    receivedImageState = 'error';
+    frame.hidden = true;
+    const error = document.createElement('p');
+    error.className = 'received-image-error';
+    error.textContent = 'IMAGE UNAVAILABLE';
+    section.append(error);
+    section.hidden = false;
+    return;
+  }
+  section.hidden = false;
+  receivedImageState = 'revealing';
+  function reveal(percent) {
+    frame.style.setProperty('--received-progress', `${percent}%`);
+    if (!terminal.hidden) {
+      const bounds = front.getBoundingClientRect();
+      if (bounds.bottom > innerHeight - 24 || bounds.top < 0) {
+        front.scrollIntoView({ behavior: reducedMotion ? 'instant' : 'smooth', block: 'nearest' });
+      }
+    }
+  }
+  if (reducedMotion) {
+    reveal(100);
+  } else {
+    // Each short segment advances, then holds. Durations total exactly six
+    // seconds, with jitter in both advance distance and pause length.
+    const segments = 18;
+    for (let step = 0; step < segments; step += 1) {
+      const advancing = randomBetween(90, 180);
+      await wait(advancing);
+      reveal(Math.min(98, ((step + randomBetween(0.5, 1)) / segments) * 100));
+      await wait(6000 / segments - advancing);
+    }
+    reveal(100);
+  }
+  receivedImageState = 'complete';
+  status.textContent = 'Image reception complete.';
 }
