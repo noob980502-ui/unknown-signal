@@ -33,7 +33,7 @@ with sync_playwright() as p:
             if scenario == 'old-html':
                 html = re.sub(r'    <pre id="os-update".*?</pre>\n', '', HTML)
                 # This older HTML used unversioned assets.
-                html = html.replace('?v=received-image-1', '')
+                html = html.replace('?v=flower-decoding-1', '')
                 page.route(URL, lambda route: route.fulfill(content_type='text/html', body=html))
             elif scenario == 'missing-children':
                 html = re.sub(r'(<pre id="os-update"[^>]*>).*?(</pre>)', r'\1\2', HTML)
@@ -79,7 +79,7 @@ with sync_playwright() as p:
             assert page.locator('#access-record').is_enabled()
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
             if scenario == 'cached-old-script':
-                assert any('script.js?v=received-image-1' in url for url in requests)
+                assert any('script.js?v=flower-decoding-1' in url for url in requests)
                 assert not any(url.endswith('/script.js') for url in requests)
             # Replay cannot duplicate the region or its message chain.
             page.locator('#access-record').click()
