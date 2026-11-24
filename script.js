@@ -520,4 +520,179 @@ async function receiveImage() {
   }
   receivedImageState = 'complete';
   status.textContent = 'Image reception complete.';
+  showFlowerMessage();
+}
+
+// Only this final transmission is decoded; earlier alien text remains intact.
+const flowerParagraphs = [
+  ["This small organism converts hydrogen into oxygen.",
+    "It is essential to the composition of this planet's atmosphere."],
+  ["And this was called a flower."],
+  ["This is a place where beauty and longing coexist.",
+    "Could we have held hands, as you once did?"],
+  ["We fear that it may all have ended before the very possibility of coexistence could be tested."],
+  ["We miss you.", "We miss you, even though we have never known you."],
+  ['.', '.', '.'],
+  ["We hope someone has received this message."],
+  ["We hope we are not alone in this universe."],
+];
+let flowerState = 'idle';
+let flowerStarted = false;
+let flowerLastScroll = -Infinity;
+
+function followFlower(element, force = false) {
+  if (terminal.hidden) return;
+  const bounds = element.getBoundingClientRect();
+  if ((bounds.bottom > innerHeight - 24 || bounds.top < 0)
+      && (force || performance.now() - flowerLastScroll >= 200)) {
+    element.scrollIntoView({ behavior: reducedMotion ? 'instant' : 'smooth', block: 'nearest' });
+    flowerLastScroll = performance.now();
+  }
+}
+
+function buildFlowerMessage(message) {
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
+  const size = getComputedStyle(message).fontSize;
+  const lines = [];
+  for (const [paragraphIndex, paragraph] of flowerParagraphs.entries()) {
+    const block = document.createElement('p');
+    block.className = 'flower-paragraph';
+    message.append(block);
+    for (const [lineIndex, text] of paragraph.entries()) {
+      const line = document.createElement('span');
+      line.className = 'flower-line';
+      block.append(line);
+      const glyphs = [];
+      // Words stay together when wrapping. Each character reserves the wider
+      // of its two alphabets, so changing the font cannot reflow the message.
+      for (const word of text.match(/\S+|\s+/g)) {
+        const wordNode = document.createElement('span');
+        if (word.trim()) wordNode.className = 'flower-word';
+        line.append(wordNode);
+        for (const character of word) {
+          const glyph = document.createElement('span');
+          glyph.className = 'flower-glyph pending';
+          glyph.append(document.createTextNode(character));
+          context.font = `${size} "Unknown Signal Alien"`;
+          const alienWidth = context.measureText(character).width;
+          context.font = `${size} "Courier New", Courier, monospace`;
+          glyph.style.width = `${Math.max(alienWidth, context.measureText(character).width)}px`;
+          wordNode.append(glyph);
+          glyphs.push(glyph);
+        }
+      }
+      lines.push({ text, glyphs, paragraphIndex, lineIndex });
+    }
+  }
+  return lines;
+}
+
+async function typeFlowerOSLine(element, text) {
+  if (reducedMotion) {
+    element.textContent = text;
+    followFlower(element, true);
+    return;
+  }
+  for (const character of text) {
+    await wait(randomBetween(35, 80));
+    element.textContent += character;
+    followFlower(element);
+  }
+}
+
+async function decodeFlowerMessage(lines) {
+  flowerState = 'decoding';
+  const start = performance.now();
+  const glyphs = lines.flatMap((line) => line.glyphs);
+  if (reducedMotion) {
+    for (const [index, line] of lines.entries()) {
+      line.glyphs.forEach((glyph) => glyph.classList.add('decoded'));
+      followFlower(line.glyphs[0]);
+      await wait(Math.max(0, start + (index + 1) * 18000 / lines.length - performance.now()));
+    }
+  } else {
+    for (const [index, glyph] of glyphs.entries()) {
+      glyph.classList.add('decoded');
+      followFlower(glyph);
+      await wait(Math.max(0, start + (index + 1) * 18000 / glyphs.length - performance.now()));
+    }
+  }
+}
+
+async function showFlowerMessage() {
+  if (flowerStarted) return;
+  flowerStarted = true;
+  flowerState = 'waiting';
+  // Preload the alphabet during the five-second silence. Never expose Latin
+  // fallback text if the actual alien font failed or never finished loading.
+  const fontReady = (async () => {
+    try {
+      const fonts = await Promise.race([
+        document.fonts.load('12px "Unknown Signal Alien"', flowerParagraphs.flat().join(' ')),
+        wait(5000).then(() => []),
+      ]);
+      return fonts.length > 0 && fonts.every((font) => font.status === 'loaded');
+    } catch { return false; }
+  })();
+  await wait(5000);
+  if (!await fontReady) {
+    flowerState = 'font-error';
+    return;
+  }
+  const section = document.createElement('section');
+  section.id = 'flower-sequence';
+  section.className = 'flower-sequence';
+  section.setAttribute('aria-label', 'Received transmission');
+  const message = document.createElement('div');
+  message.id = 'flower-message';
+  message.className = 'flower-message';
+  message.setAttribute('aria-hidden', 'true');
+  section.append(message);
+  document.querySelector('#received-image').after(section);
+  const lines = buildFlowerMessage(message);
+  const cursor = document.createElement('span');
+  cursor.className = 'cursor flower-cursor';
+  cursor.setAttribute('aria-hidden', 'true');
+  cursor.textContent = '_';
+  flowerState = 'typing';
+  for (const [index, line] of lines.entries()) {
+    for (const glyph of line.glyphs) {
+      if (!reducedMotion && line.text !== '.') await wait(randomBetween(35, 80));
+      glyph.classList.remove('pending');
+      glyph.append(cursor);
+      followFlower(glyph);
+    }
+    const next = lines[index + 1];
+    if (next) {
+      const pause = line.text === '.' && next.text === '.' ? 1500
+        : next.paragraphIndex !== line.paragraphIndex ? randomBetween(1500, 3000)
+        : randomBetween(500, 1000);
+      await wait(pause);
+    }
+  }
+  flowerState = 'waiting-integrity';
+  await wait(3000);
+  const integrity = document.createElement('pre');
+  integrity.className = 'screen flower-integrity';
+  const sync = document.createElement('span');
+  sync.id = 'flower-sync';
+  const complete = document.createElement('span');
+  complete.id = 'flower-complete';
+  integrity.append(sync, document.createTextNode('\n'), complete);
+  section.append(integrity);
+  flowerState = 'synchronizing';
+  await typeFlowerOSLine(sync, 'SYNCHRONIZATION AND INTEGRITY CHECK...');
+  flowerState = 'waiting-complete';
+  await wait(3000);
+  await typeFlowerOSLine(complete, 'COMPLETE.');
+  flowerState = 'waiting-decode';
+  await wait(1000);
+  await decodeFlowerMessage(lines);
+  flowerState = 'complete';
+  message.removeAttribute('aria-hidden');
+  status.textContent = 'Transmission decoded.';
+  const last = lines.at(-1).glyphs.at(-1);
+  last.append(cursor);
+  followFlower(last, true);
 }

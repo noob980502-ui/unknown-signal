@@ -138,3 +138,22 @@ body { margin: 0; min-height: 100vh; min-height: 100svh; }
   pointer-events: none;
 }
 .received-image-error { margin: 0; font: inherit; }
+
+.flower-sequence { margin-top: 20px; width: 100%; max-width: 800px; }
+.flower-message { position: relative; line-height: 1.65; }
+.flower-paragraph { margin: 0 0 1.65em; }
+.flower-paragraph:last-child { margin-bottom: 0; }
+.flower-line { display: block; min-height: 1.65em; }
+.flower-word { display: inline-block; white-space: nowrap; }
+.flower-glyph {
+  display: inline-block;
+  position: relative;
+  vertical-align: top;
+  white-space: pre;
+  font-family: "Unknown Signal Alien", "Courier New", Courier, monospace;
+  scroll-margin-block: 24px;
+}
+.flower-glyph.pending { visibility: hidden; }
+.flower-glyph.decoded, .flower-cursor { font-family: "Courier New", Courier, monospace; }
+.flower-cursor { position: absolute; top: 0; left: 100%; }
+.flower-integrity { margin-top: 20px; }
